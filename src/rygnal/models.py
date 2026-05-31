@@ -41,6 +41,15 @@ class Severity(StrEnum):
     CRITICAL = "critical"
 
 
+class ExecutionStatus(StrEnum):
+    """Tool execution status."""
+
+    EXECUTED = "executed"
+    SKIPPED = "skipped"
+    FAILED = "failed"
+    SIMULATED = "simulated"
+
+
 class ToolRequest(BaseModel):
     """A tool action requested by an AI agent."""
 
@@ -105,3 +114,21 @@ class AuditEvent(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
     prev_event_hash: str | None = None
     event_hash: str | None = None
+
+
+class ToolExecutionResult(BaseModel):
+    """Result of a tool execution attempt."""
+
+    status: ExecutionStatus
+    executed: bool
+    output: Any | None = None
+    error: str | None = None
+
+
+class InterceptorResult(BaseModel):
+    """Final result returned by the Rygnal interceptor."""
+
+    request: ToolRequest
+    policy_decision: PolicyDecision
+    audit_event: AuditEvent
+    execution: ToolExecutionResult
