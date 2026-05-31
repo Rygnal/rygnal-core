@@ -1,9 +1,26 @@
 """Shared data models for Rygnal."""
 
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
+from uuid import uuid4
 
 from pydantic import BaseModel, Field
+
+
+def utc_now_iso() -> str:
+    """Return current UTC timestamp in ISO-8601 format."""
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
+
+
+def new_event_id() -> str:
+    """Return a unique audit event ID."""
+    return f"evt_{uuid4().hex}"
+
+
+def new_trace_id() -> str:
+    """Return a unique trace ID."""
+    return f"trace_{uuid4().hex}"
 
 
 class Decision(StrEnum):
@@ -60,3 +77,31 @@ class PolicyDecision(BaseModel):
     severity: Severity
     reason: str
     policy_id: str | None = None
+
+
+class AuditEvent(BaseModel):
+    """Tamper-evident audit event for an AI-agent tool decision."""
+
+    schema_version: str = "audit.v1"
+    event_id: str = Field(default_factory=new_event_id)
+    timestamp: str = Field(default_factory=utc_now_iso)
+    trace_id: str = Field(default_factory=new_trace_id)
+
+    user_id: str
+    agent_id: str
+    environment: str
+
+    tool_name: str
+    action: str | None = None
+    target: Any | None = None
+    input: Any | None = None
+
+    decision: Decision
+    allowed: bool
+    severity: Severity
+    policy_id: str | None = None
+    reason: str
+
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    prev_event_hash: str | None = None
+    event_hash: str | None = None
