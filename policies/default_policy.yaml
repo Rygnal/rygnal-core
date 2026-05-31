@@ -12,3 +12,15 @@ rules:
     decision: block
     severity: critical
     reason: "Dangerous shell command detected."
+
+  - id: approval-file-delete
+    tool_name: file_delete
+    decision: require_approval
+    severity: high
+    reason: "File deletion requires human approval."
+
+  - id: simulate-external-api-send
+    tool_name: external_api_send
+    decision: simulate
+    severity: medium
+    reason: "External API send should be simulated during MVP testing."
