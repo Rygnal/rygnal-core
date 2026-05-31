@@ -132,3 +132,4 @@ class InterceptorResult(BaseModel):
     policy_decision: PolicyDecision
     audit_event: AuditEvent
     execution: ToolExecutionResult
+    risk_assessment: dict[str, Any]
