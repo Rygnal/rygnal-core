@@ -8,11 +8,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from pathlib import Path
 from typing import Any
 
 from rygnal.models import AuditEvent, PolicyDecision, ToolRequest, new_trace_id
+from rygnal.security import redact_sensitive_value
 
 SENSITIVE_KEYWORDS = (
     "password",
@@ -59,7 +59,7 @@ class AuditLogger:
             severity=policy_decision.severity,
             policy_id=policy_decision.policy_id,
             reason=policy_decision.reason,
-            metadata=metadata or {},
+            metadata=redact_sensitive_value(metadata or {}),
         )
 
         self.write_event(event)
@@ -121,41 +121,3 @@ class AuditLogger:
         data["event_hash"] = None
         payload = json.dumps(data, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
-def redact_sensitive_value(value: Any) -> Any:
-    """Redact secrets from nested dict/list/string values before logging."""
-    if value is None:
-        return None
-
-    if isinstance(value, dict):
-        return {
-            key: REDACTED if is_sensitive_key(key) else redact_sensitive_value(item)
-            for key, item in value.items()
-        }
-
-    if isinstance(value, list):
-        return [redact_sensitive_value(item) for item in value]
-
-    if isinstance(value, tuple):
-        return tuple(redact_sensitive_value(item) for item in value)
-
-    if isinstance(value, str):
-        return redact_sensitive_string(value)
-
-    return value
-
-
-def is_sensitive_key(key: str) -> bool:
-    """Return True when a key name looks sensitive."""
-    normalized_key = key.lower().replace("-", "_")
-    return any(keyword in normalized_key for keyword in SENSITIVE_KEYWORDS)
-
-
-def redact_sensitive_string(value: str) -> str:
-    """Redact common secret assignments inside strings."""
-    pattern = re.compile(
-        r"(?i)(password|passwd|secret|token|api_key|apikey|access_key|private_key)"
-        r"\s*[:=]\s*[^\s,;]+"
-    )
-    return pattern.sub(lambda match: f"{match.group(1)}={REDACTED}", value)
