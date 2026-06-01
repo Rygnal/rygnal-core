@@ -43,7 +43,11 @@ def render_outcome(outcome: Any, index: int) -> list[str]:
 
     decision = enum_value(policy_decision.decision).upper()
     execution_status = enum_value(execution.status)
-    runtime_mode = enum_value(getattr(result, "runtime_mode", "unknown"))
+    # Get runtime_mode from audit metadata (stored by interceptor) or result
+    metadata = getattr(audit_event, "metadata", {})
+    runtime_mode = enum_value(
+        metadata.get("runtime_mode", getattr(result, "runtime_mode", "unknown"))
+    )
 
     risk_level = enum_value(risk.get("risk_level", "unknown"))
     risk_score = risk.get("risk_score", "n/a")
