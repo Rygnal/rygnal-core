@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from demo.demo_tools import build_demo_tool_executor, prepare_demo_sandbox
+from rygnal.approval import ApprovalWorkflow
 from rygnal.audit_logger import AuditLogger
 from rygnal.interceptor import RygnalInterceptor
 from rygnal.models import InterceptorResult, ToolRequest
@@ -38,9 +39,11 @@ class ScenarioRunner:
         self,
         sandbox_path: str | Path = "demo_sandbox",
         audit_log_path: str | Path = "logs/audit_log.jsonl",
+        approval_workflow: ApprovalWorkflow | None = None,
     ) -> None:
         self.sandbox_path = Path(sandbox_path)
         self.audit_log_path = Path(audit_log_path)
+        self.approval_workflow = approval_workflow
 
     def build_interceptor(self) -> RygnalInterceptor:
         """Build a Rygnal interceptor for scenario execution."""
@@ -51,6 +54,7 @@ class ScenarioRunner:
             audit_logger=AuditLogger(self.audit_log_path),
             tool_executor=build_demo_tool_executor(self.sandbox_path),
             risk_engine=RiskEngine(),
+            approval_workflow=self.approval_workflow,
         )
 
     def scenarios(self) -> list[Scenario]:

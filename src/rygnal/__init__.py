@@ -7,6 +7,7 @@ from rygnal.approval import (
     reject_for_testing,
 )
 from rygnal.audit_logger import AuditLogger
+from rygnal.cli_approval import CLIApprovalResolver, build_cli_approval_workflow
 from rygnal.core import Rygnal
 from rygnal.interceptor import RygnalInterceptor
 from rygnal.models import (
@@ -35,6 +36,8 @@ __all__ = [
     "ApprovalWorkflow",
     "AuditEvent",
     "AuditLogger",
+    "build_cli_approval_workflow",
+    "CLIApprovalResolver",
     "Decision",
     "ExecutionStatus",
     "InterceptorResult",
