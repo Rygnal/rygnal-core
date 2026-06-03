@@ -52,6 +52,10 @@ class RygnalInterceptor:
         audit_metadata: dict[str, Any] = risk_metadata.copy()
         audit_metadata["runtime_mode"] = self.runtime_mode.value
 
+        policy_explanation = self._policy_explanation_metadata(policy_decision)
+        if policy_explanation:
+            audit_metadata["policy_explanation"] = policy_explanation
+
         if policy_decision.decision == Decision.REQUIRE_APPROVAL:
             approval_workflow = self.approval_workflow or ApprovalWorkflow()
             approval_request, approval_decision = approval_workflow.request_approval(
@@ -155,6 +159,21 @@ class RygnalInterceptor:
             executed=False,
             error=f"Tool execution skipped: unknown runtime mode {self.runtime_mode}",
         )
+
+    @staticmethod
+    def _policy_explanation_metadata(policy_decision: Any) -> dict[str, Any]:
+        explanation = getattr(policy_decision, "explanation", None)
+
+        if explanation is None:
+            return {}
+
+        if hasattr(explanation, "model_dump"):
+            return explanation.model_dump(mode="json")
+
+        if isinstance(explanation, dict):
+            return explanation
+
+        return {}
 
     @staticmethod
     def _risk_metadata(risk_assessment: Any) -> dict[str, Any]:

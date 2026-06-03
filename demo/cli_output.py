@@ -50,6 +50,12 @@ def render_outcome(outcome: Any, index: int) -> list[str]:
 
     policy_id = policy_decision.policy_id or "default-allow"
     reason = policy_decision.reason
+    explanation = policy_explanation_value(policy_decision, audit_event)
+    matched = "yes" if explanation.get("matched") else "no"
+    default_decision = "yes" if explanation.get("default_decision") else "no"
+    priority = explanation.get("matched_rule_priority") or "n/a"
+    matched_conditions = explanation.get("matched_conditions") or []
+    conditions = ", ".join(matched_conditions) if matched_conditions else "n/a"
     tool_name = scenario.request.tool_name
     action = scenario.request.action or "n/a"
     target = scenario.request.target or "n/a"
@@ -63,6 +69,10 @@ def render_outcome(outcome: Any, index: int) -> list[str]:
         f"   Runtime     : {runtime_mode}",
         f"   Risk        : {risk_level} / {risk_score}",
         f"   Policy      : {policy_id}",
+        f"   Priority    : {priority}",
+        f"   Matched     : {matched}",
+        f"   Conditions  : {conditions}",
+        f"   Default     : {default_decision}",
         f"   Execution   : {execution_status}",
         f"   Reason      : {reason}",
         f"   Audit Event : {audit_event.event_id}",
@@ -86,6 +96,35 @@ def runtime_mode_value(result: Any) -> str:
             return value
 
     return "enforce"
+
+
+def policy_explanation_value(policy_decision: Any, audit_event: Any) -> dict[str, Any]:
+    """Return policy explanation from policy decision or audit metadata."""
+    explanation = getattr(policy_decision, "explanation", None)
+
+    if explanation is not None:
+        if hasattr(explanation, "model_dump"):
+            return explanation.model_dump(mode="json")
+
+        if isinstance(explanation, dict):
+            return explanation
+
+        return {
+            "matched": getattr(explanation, "matched", False),
+            "matched_rule_id": getattr(explanation, "matched_rule_id", None),
+            "matched_rule_priority": getattr(explanation, "matched_rule_priority", None),
+            "matched_conditions": getattr(explanation, "matched_conditions", []),
+            "evaluated_rule_ids": getattr(explanation, "evaluated_rule_ids", []),
+            "default_decision": getattr(explanation, "default_decision", False),
+        }
+
+    metadata = getattr(audit_event, "metadata", {}) if audit_event else {}
+    if isinstance(metadata, dict):
+        value = metadata.get("policy_explanation")
+        if isinstance(value, dict):
+            return value
+
+    return {}
 
 
 def normalize_risk(risk_assessment: Any) -> dict[str, Any]:
