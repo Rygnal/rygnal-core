@@ -83,13 +83,15 @@ def build_file_write_tool(sandbox_path: str | Path) -> ToolHandler:
         except SecurityViolation as exc:
             return {"ok": False, "error": str(exc), "target": request.target}
 
-        content = str(request.input or "")
+        raw_content = request.input or ""
 
-        if contains_secret(content):
+        if contains_secret(raw_content):
             return {
                 "ok": False,
                 "error": "Refusing to write content that appears to contain secrets.",
             }
+
+        content = str(raw_content)
 
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")

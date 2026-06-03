@@ -146,18 +146,21 @@ def contains_secret(value: Any) -> bool:
     if value is None:
         return False
 
-    if isinstance(value, str):
-        return any(pattern.search(value) for pattern in SECRET_PATTERNS)
-
     if isinstance(value, dict):
-        if any(is_sensitive_key(key) for key in value):
-            return True
-        return any(contains_secret(item) for item in value.values())
+        for key, item in value.items():
+            if is_sensitive_key(str(key)):
+                return True
 
-    if isinstance(value, (list, tuple, set)):
+            if contains_secret(item):
+                return True
+
+        return False
+
+    if isinstance(value, list | tuple | set):
         return any(contains_secret(item) for item in value)
 
-    return False
+    text = stringify(value)
+    return any(pattern.search(text) for pattern in SECRET_PATTERNS)
 
 
 def redact_sensitive_value(value: Any) -> Any:
