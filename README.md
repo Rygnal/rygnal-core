@@ -4,15 +4,16 @@ Rygnal Core is a local-first core MVP for runtime governance of AI-agent tool ac
 
 ## What Works Today
 
-- Policy Engine v1
+- Policy Engine v1/v2 schema
 - Risk Engine v1
 - Audit Logger v1
 - Runtime Interceptor v1
 - Approval Workflow v1
 - Runtime Modes v1
 - Real Scenario Runner v1
-- CLI Output v1
-- Security Hardening v1
+- Rygnal CLI v1
+- Policy explain output
+- Security hardening
 - Docker setup
 - CI validation
 
@@ -22,42 +23,59 @@ Rygnal Core is a local-first core MVP for runtime governance of AI-agent tool ac
 - Login/auth system
 - Billing
 - Multi-tenant workspaces
-- Real AI-agent integration
-- MCP gateway
 - Enterprise SSO
 - SIEM export
 - Cloud deployment
 
-## Run Locally
+## Install Locally
 
-```bash
-make install
-make validate
-```
+Create and activate a virtual environment:
 
-Run the demo:
+    python -m venv .venv
+    source .venv/bin/activate
 
-```bash
-python -m demo.run_demo
-```
+Install development dependencies:
+
+    make install
+
+Install Rygnal Core in editable mode:
+
+    pip install -e .
+
+Verify the package import:
+
+    python -c "from rygnal import Rygnal; assert Rygnal is not None; print('Rygnal import OK')"
+
+Verify the CLI:
+
+    rygnal --help
+    rygnal version
+
+Run the demo through the package CLI:
+
+    rygnal demo run
+
+Run the original module demo:
+
+    python -m demo.run_demo
+
+Run validation:
+
+    make validate
 
 ## Run with Docker
 
-```bash
-docker compose build
-docker compose run --rm rygnal python -m demo.run_demo
-```
+    docker compose build
+    docker compose run --rm rygnal python -m demo.run_demo
 
 ## Validation
 
-```bash
-ruff format src tests demo
-ruff check src tests demo
-pytest -q
-bandit -r src demo -c pyproject.toml
-pip-audit -r requirements-dev.txt
-python -m demo.run_demo
-```
+    ruff format src tests demo examples
+    ruff check src tests demo examples
+    pytest -q
+    bandit -r src demo examples -c pyproject.toml
+    pip-audit -r requirements-dev.txt
+    python -m demo.run_demo
 
 ## License
 

@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "rygnal-core"
 version = "0.1.0"
@@ -30,3 +34,7 @@ quote-style = "double"
 [tool.bandit]
 exclude_dirs = ["tests"]
 skips = []
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
