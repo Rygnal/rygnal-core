@@ -28,7 +28,16 @@ from rygnal.models import (
     ToolRequest,
 )
 from rygnal.policy_engine import PolicyEngine, load_default_policy_engine
-from rygnal.risk_engine import RiskAssessment, RiskEngine, RiskLevel, RiskSignal
+from rygnal.risk_engine import (
+    RiskAssessment,
+    RiskContext,
+    RiskEngine,
+    RiskLevel,
+    RiskScoringProfile,
+    RiskSignal,
+    RiskSignalCategory,
+    RiskSignalRegistry,
+)
 from rygnal.tool_executor import ToolExecutor
 
 __all__ = [
@@ -49,6 +58,10 @@ __all__ = [
     "PolicyRule",
     "PolicySchema",
     "RiskAssessment",
+    "RiskSignalRegistry",
+    "RiskSignalCategory",
+    "RiskScoringProfile",
+    "RiskContext",
     "RiskEngine",
     "RiskLevel",
     "RiskSignal",
