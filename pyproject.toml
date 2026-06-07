@@ -39,3 +39,9 @@ skips = []
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+
+[project.optional-dependencies]
+live-openai = [
+    "openai>=1.0.0"
+]
