@@ -1,5 +1,6 @@
 """Public SDK exports for Rygnal Core."""
 
+from rygnal.api import create_app as create_api_app
 from rygnal.approval import (
     ApprovalWorkflow,
     approve_for_testing,
@@ -75,6 +76,7 @@ __all__ = [
     "ToolExecutor",
     "ToolRequest",
     "approve_for_testing",
+    "create_api_app",
     "load_default_policy_engine",
     "reject_by_default",
     "reject_for_testing",
