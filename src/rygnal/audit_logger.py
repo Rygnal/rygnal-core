@@ -32,14 +32,9 @@ REDACTED = "[REDACTED]"
 class AuditLogger:
     """Write Rygnal audit events to an append-only JSONL file."""
 
-    def __init__(
-        self,
-        log_path: str | Path = "logs/audit_log.jsonl",
-        storage_backend: Any | None = None,
-    ) -> None:
+    def __init__(self, log_path: str | Path = "logs/audit_log.jsonl") -> None:
         self.log_path = Path(log_path)
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
-        self.storage_backend = storage_backend
 
     def log_decision(
         self,
@@ -77,9 +72,6 @@ class AuditLogger:
 
         with self.log_path.open("a", encoding="utf-8") as log_file:
             log_file.write(json.dumps(event.model_dump(mode="json"), sort_keys=True) + "\n")
-
-        if self.storage_backend is not None:
-            self.storage_backend.write_event(event)
 
     def read_events(self) -> list[AuditEvent]:
         """Read all audit events from the log file."""
