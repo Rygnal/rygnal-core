@@ -1,5 +1,11 @@
 # MVP Demo Plan
 
+## Status
+
+Historical archive note. This early demo planning document is retained for context and is not a canonical product guide.
+
+Use `docs/getting-started.md` and `docs/release-readiness-v0.1.md` for current runnable validation and demo expectations.
+
 ## Demo Goal
 
 AI agent tries risky action -> Rygnal intercepts -> policy checks -> action blocked/allowed -> audit log created.

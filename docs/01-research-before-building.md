@@ -1,5 +1,11 @@
 # Research Before Building
 
+## Status
+
+Historical archive note. This early planning snapshot is retained for project history and should not be treated as current product direction.
+
+For current product truth, see canonical docs listed in `docs/00-index.md`.
+
 ## Topics
 
 - AI agent tool-calling

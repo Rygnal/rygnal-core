@@ -1,5 +1,11 @@
 # Policy Engine v2: YAML vs OPA/Rego Research
 
+## Status
+
+Historical archive note. This research document is retained for historical context and is superseded by `docs/23-policy-engine-v2-research.md` as the current policy v2 direction.
+
+Current direction: build improved YAML Policy Engine v2 first, keep OPA/Rego as a future optional backend.
+
 **Author:** Rygnal Engineering  
 **Date:** June 2026  
 **Status:** Research Complete
