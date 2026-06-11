@@ -27,8 +27,10 @@ class PolicyEngine:
         self,
         rules: list[PolicyRule] | None = None,
         policy_version: str = "policy.v1",
+        default_decision: Decision = Decision.ALLOW,
     ) -> None:
         self.policy_version = policy_version
+        self.default_decision = default_decision
         self.rules = sorted(rules or [], key=lambda rule: rule.priority)
 
     @classmethod
@@ -51,11 +53,13 @@ class PolicyEngine:
 
         policy_schema = PolicySchema(
             policy_version=data.get("policy_version", "policy.v1"),
+            default_decision=data.get("default_decision", Decision.ALLOW),
             rules=[PolicyRule(**rule) for rule in raw_rules],
         )
         return cls(
             rules=policy_schema.rules,
             policy_version=policy_schema.policy_version,
+            default_decision=policy_schema.default_decision,
         )
 
     def evaluate(
@@ -89,10 +93,10 @@ class PolicyEngine:
                 )
 
         return PolicyDecision(
-            decision=Decision.ALLOW,
-            allowed=True,
+            decision=self.default_decision,
+            allowed=self._is_allowed(self.default_decision),
             severity=Severity.LOW,
-            reason="No matching policy rule. Default allow.",
+            reason=self._default_reason(),
             policy_id=None,
             explanation=PolicyExplanation(
                 policy_version=self.policy_version,
@@ -230,6 +234,12 @@ class PolicyEngine:
             conditions.append("risk_score_min")
 
         return conditions
+
+    def _default_reason(self) -> str:
+        if self.default_decision == Decision.ALLOW:
+            return "No matching policy rule. Default allow."
+
+        return f"No matching policy rule. Default decision: {self.default_decision.value}."
 
     @staticmethod
     def _is_allowed(decision: Decision) -> bool:

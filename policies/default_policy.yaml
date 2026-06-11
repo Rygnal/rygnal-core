@@ -1,4 +1,5 @@
 policy_version: policy.v2
+default_decision: allow
 rules:
   - id: block-env-read
     priority: 10

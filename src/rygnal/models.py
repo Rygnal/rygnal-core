@@ -112,6 +112,7 @@ class PolicySchema(BaseModel):
     """Validated policy file schema."""
 
     policy_version: str = "policy.v1"
+    default_decision: Decision = Decision.ALLOW
     rules: list[PolicyRule] = Field(default_factory=list)
 
 
