@@ -48,7 +48,12 @@ class AuditLogger:
         metadata: dict[str, Any] | None = None,
     ) -> AuditEvent:
         """Create and persist an audit event for a policy decision."""
-        trace_id = str(request.metadata.get("trace_id") or new_trace_id())
+        trace_id_value = request.metadata.get("trace_id")
+        trace_id = (
+            str(redact_sensitive_value(trace_id_value))
+            if trace_id_value is not None
+            else new_trace_id()
+        )
 
         event = AuditEvent(
             trace_id=trace_id,
