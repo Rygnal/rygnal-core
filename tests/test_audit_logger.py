@@ -131,3 +131,46 @@ def test_audit_logger_detects_tampering(tmp_path):
     log_path.write_text(json.dumps(saved_event) + "\n")
 
     assert logger.verify_integrity() is False
+
+
+def test_audit_logger_fsyncs_each_append(tmp_path, monkeypatch):
+    log_path = tmp_path / "audit_log.jsonl"
+    logger = AuditLogger(log_path)
+    fsync_calls: list[int] = []
+
+    def fake_fsync(file_descriptor: int) -> None:
+        fsync_calls.append(file_descriptor)
+
+    monkeypatch.setattr("rygnal.audit_logger.os.fsync", fake_fsync)
+
+    decision = PolicyDecision(
+        decision=Decision.BLOCK,
+        allowed=False,
+        severity=Severity.HIGH,
+        reason="Blocked.",
+    )
+
+    event = logger.log_decision(ToolRequest(tool_name="file_read", target=".env"), decision)
+
+    assert event.event_hash
+    assert fsync_calls
+    assert log_path.read_text(encoding="utf-8").count("\n") == 1
+
+
+def test_audit_integrity_verification_does_not_mutate_events(tmp_path):
+    logger = AuditLogger(tmp_path / "audit_log.jsonl")
+
+    decision = PolicyDecision(
+        decision=Decision.BLOCK,
+        allowed=False,
+        severity=Severity.HIGH,
+        reason="Blocked.",
+    )
+
+    logger.log_decision(ToolRequest(tool_name="file_read", target=".env"), decision)
+    event_before = logger.read_events()[0]
+
+    assert logger.verify_integrity() is True
+
+    event_after = logger.read_events()[0]
+    assert event_after == event_before

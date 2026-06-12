@@ -1,13 +1,15 @@
 """Append-only audit logger for Rygnal.
 
-The logger stores structured JSONL audit events and adds a simple hash chain
-so future tampering can be detected.
+The logger stores structured JSONL audit events and adds a hash chain so
+tampering can be detected. Each JSONL append is flushed and fsynced before
+returning to reduce audit-loss risk after process or host failure.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -47,7 +49,7 @@ class AuditLogger:
         policy_decision: PolicyDecision,
         metadata: dict[str, Any] | None = None,
     ) -> AuditEvent:
-        """Create and persist an audit event for a policy decision."""
+        """Create, hash, durably append, and return an audit event."""
         trace_id = str(request.metadata.get("trace_id") or new_trace_id())
 
         event = AuditEvent(
@@ -67,19 +69,28 @@ class AuditLogger:
             metadata=redact_sensitive_value(metadata or {}),
         )
 
-        self.write_event(event)
-        return event
+        return self.write_event(event)
 
-    def write_event(self, event: AuditEvent) -> None:
-        """Append one audit event to the JSONL log file."""
-        event.prev_event_hash = self._last_event_hash()
-        event.event_hash = self._calculate_event_hash(event)
+    def write_event(self, event: AuditEvent) -> AuditEvent:
+        """Append one immutable audit event to the JSONL log file."""
+        event_with_previous_hash = event.model_copy(
+            update={"prev_event_hash": self._last_event_hash()}
+        )
+        persisted_event = event_with_previous_hash.model_copy(
+            update={"event_hash": self._calculate_event_hash(event_with_previous_hash)}
+        )
 
         with self.log_path.open("a", encoding="utf-8") as log_file:
-            log_file.write(json.dumps(event.model_dump(mode="json"), sort_keys=True) + "\n")
+            log_file.write(
+                json.dumps(persisted_event.model_dump(mode="json"), sort_keys=True) + "\n"
+            )
+            log_file.flush()
+            os.fsync(log_file.fileno())
 
         if self.storage_backend is not None:
-            self.storage_backend.write_event(event)
+            self.storage_backend.write_event(persisted_event)
+
+        return persisted_event
 
     def read_events(self) -> list[AuditEvent]:
         """Read all audit events from the log file."""
@@ -94,16 +105,19 @@ class AuditLogger:
         return events
 
     def verify_integrity(self) -> bool:
-        """Verify the audit log hash chain."""
+        """Verify the audit log hash chain without mutating loaded events."""
         events = self.read_events()
         previous_hash: str | None = None
 
         for event in events:
             expected_hash = event.event_hash
-            event.prev_event_hash = previous_hash
-            event.event_hash = None
-
-            actual_hash = self._calculate_event_hash(event)
+            event_for_hash = event.model_copy(
+                update={
+                    "prev_event_hash": previous_hash,
+                    "event_hash": None,
+                }
+            )
+            actual_hash = self._calculate_event_hash(event_for_hash)
 
             if actual_hash != expected_hash:
                 return False

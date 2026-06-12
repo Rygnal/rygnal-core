@@ -128,6 +128,8 @@ class PolicySchema(BaseModel):
 class PolicyExplanation(BaseModel):
     """Explain why a policy decision was produced."""
 
+    model_config = ConfigDict(frozen=True)
+
     policy_version: str
     matched: bool
     matched_rule_id: str | None = None
@@ -139,6 +141,8 @@ class PolicyExplanation(BaseModel):
 
 class PolicyDecision(BaseModel):
     """Policy evaluation result."""
+
+    model_config = ConfigDict(frozen=True)
 
     decision: Decision
     allowed: bool
@@ -182,6 +186,8 @@ class ApprovalDecision(BaseModel):
 
 class AuditEvent(BaseModel):
     """Tamper-evident audit event for an AI-agent tool decision."""
+
+    model_config = ConfigDict(frozen=True)
 
     schema_version: str = "audit.v1"
     event_id: str = Field(default_factory=new_event_id)
