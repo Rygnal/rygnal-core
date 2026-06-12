@@ -126,7 +126,7 @@ class RygnalInterceptor:
             )
 
         # In ENFORCE mode, respect policy decisions
-        if self.runtime_mode == RuntimeMode.ENFORCE:
+        if self.runtime_mode in {RuntimeMode.ENFORCE, RuntimeMode.PRODUCTION_SAFE}:
             if policy_decision.decision == Decision.ALLOW:
                 return self.tool_executor.execute(request)
 

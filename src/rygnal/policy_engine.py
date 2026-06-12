@@ -15,6 +15,7 @@ from rygnal.models import (
     PolicyExplanation,
     PolicyRule,
     PolicySchema,
+    RuntimeMode,
     Severity,
     ToolRequest,
 )
@@ -258,6 +259,13 @@ class PolicyEngine:
         return str(value)
 
 
-def load_default_policy_engine() -> PolicyEngine:
-    """Load the default Rygnal policy engine."""
+def load_default_policy_engine(
+    runtime_mode: RuntimeMode | str = RuntimeMode.ENFORCE,
+) -> PolicyEngine:
+    """Load the default Rygnal policy engine for the requested runtime mode."""
+    mode = RuntimeMode(runtime_mode)
+
+    if mode == RuntimeMode.PRODUCTION_SAFE:
+        return PolicyEngine.from_file("policies/production_safe_policy.yaml")
+
     return PolicyEngine.from_file("policies/default_policy.yaml")

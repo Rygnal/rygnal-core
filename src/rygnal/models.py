@@ -69,6 +69,7 @@ class RuntimeMode(StrEnum):
     OBSERVE = "observe"
     SIMULATE = "simulate"
     ENFORCE = "enforce"
+    PRODUCTION_SAFE = "production_safe"
 
 
 class ToolRequest(BaseModel):
