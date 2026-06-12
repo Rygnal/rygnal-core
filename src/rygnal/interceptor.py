@@ -70,6 +70,7 @@ class RygnalInterceptor:
                 "decided_by": approval_decision.decided_by,
                 "decided_at": approval_decision.decided_at,
                 "reason": approval_decision.reason,
+                "metadata": approval_decision.metadata,
             }
 
         audit_event = self.audit_logger.log_decision(
