@@ -52,7 +52,10 @@ class ApprovalWorkflow:
         if approval_decision.approval_id != approval_request.approval_id:
             raise ValueError("Approval decision ID does not match approval request ID.")
 
-        return approval_request, approval_decision
+        return approval_request, _enforce_self_approval_guard(
+            approval_request,
+            approval_decision,
+        )
 
 
 def reject_by_default(approval_request: ApprovalRequest) -> ApprovalDecision:
@@ -96,6 +99,32 @@ def reject_for_testing(
         decided_by=decided_by,
         decided_at=utc_now_iso(),
         reason=reason,
+    )
+
+
+def _enforce_self_approval_guard(
+    approval_request: ApprovalRequest,
+    approval_decision: ApprovalDecision,
+) -> ApprovalDecision:
+    """Reject approvals where the requester approves their own action."""
+    if not approval_decision.approved:
+        return approval_decision
+
+    if approval_decision.decided_by != approval_request.requested_by:
+        return approval_decision
+
+    return ApprovalDecision(
+        approval_id=approval_request.approval_id,
+        status=ApprovalStatus.REJECTED,
+        approved=False,
+        decided_by="system",
+        decided_at=utc_now_iso(),
+        reason=("Self-approval rejected: requester cannot approve their own approval request."),
+        metadata={
+            **approval_decision.metadata,
+            "guard": "self-approval",
+            "attempted_decided_by": approval_decision.decided_by,
+        },
     )
 
 
