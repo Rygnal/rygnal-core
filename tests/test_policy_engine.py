@@ -77,7 +77,7 @@ def test_external_api_send_is_simulated():
     assert result.policy_id == "simulate-external-api-send"
 
 
-def test_safe_file_read_is_allowed_by_default():
+def test_safe_file_read_is_allowed_by_explicit_rule():
     engine = load_default_policy_engine()
 
     request = ToolRequest(
@@ -90,7 +90,7 @@ def test_safe_file_read_is_allowed_by_default():
 
     assert result.decision == Decision.ALLOW
     assert result.allowed is True
-    assert result.policy_id is None
+    assert result.policy_id == "allow-readme-read"
 
 
 def test_invalid_policy_file_raises_error(tmp_path: Path):
@@ -194,13 +194,13 @@ def test_policy_decision_includes_explain_output_for_matched_rule():
     assert result.explanation.default_decision is False
 
 
-def test_policy_decision_includes_explain_output_for_default_allow():
+def test_policy_decision_includes_explain_output_for_default_block():
     engine = load_default_policy_engine()
 
-    result = engine.evaluate(
-        ToolRequest(tool_name="file_read", action="read_file", target="README.md")
-    )
+    result = engine.evaluate(ToolRequest(tool_name="unknown_tool", action="noop"))
 
+    assert result.decision == Decision.BLOCK
+    assert result.allowed is False
     assert result.explanation is not None
     assert result.explanation.policy_version == "policy.v2"
     assert result.explanation.matched is False
@@ -209,9 +209,13 @@ def test_policy_decision_includes_explain_output_for_default_allow():
     assert result.explanation.matched_conditions == []
     assert result.explanation.evaluated_rule_ids == [
         "block-env-read",
+        "block-sensitive-path-read",
         "block-dangerous-shell",
         "approval-file-delete",
         "simulate-external-api-send",
+        "allow-readme-read",
+        "allow-demo-list-command",
+        "allow-demo-project-notes-write",
     ]
     assert result.explanation.default_decision is True
 

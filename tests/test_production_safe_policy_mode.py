@@ -57,12 +57,17 @@ def test_production_safe_policy_requires_approval_for_unmatched_safe_read(tmp_pa
     assert result.execution.status == ExecutionStatus.SKIPPED
 
 
-def test_existing_default_policy_remains_local_dev_compatible() -> None:
+def test_default_policy_remains_fail_closed_with_explicit_safe_read_allow() -> None:
     engine = load_default_policy_engine()
 
-    result = engine.evaluate(
+    allowed_read = engine.evaluate(
         ToolRequest(tool_name="file_read", action="read_file", target="README.md")
     )
+    unmatched = engine.evaluate(ToolRequest(tool_name="unknown_tool", action="noop"))
 
-    assert result.decision == Decision.ALLOW
-    assert result.allowed is True
+    assert engine.default_decision == Decision.BLOCK
+    assert allowed_read.decision == Decision.ALLOW
+    assert allowed_read.allowed is True
+    assert allowed_read.policy_id == "allow-readme-read"
+    assert unmatched.decision == Decision.BLOCK
+    assert unmatched.allowed is False

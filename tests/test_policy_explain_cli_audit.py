@@ -30,7 +30,7 @@ def test_audit_metadata_includes_policy_explanation_for_matched_rule(tmp_path):
     assert explanation["default_decision"] is False
 
 
-def test_audit_metadata_includes_policy_explanation_for_default_allow(tmp_path):
+def test_audit_metadata_includes_policy_explanation_for_explicit_safe_read_allow(tmp_path):
     audit_log_path = tmp_path / "audit_log.jsonl"
 
     runner = ScenarioRunner(
@@ -49,8 +49,9 @@ def test_audit_metadata_includes_policy_explanation_for_default_allow(tmp_path):
     explanation = saved_event["metadata"]["policy_explanation"]
 
     assert explanation["policy_version"] == "policy.v2"
-    assert explanation["matched"] is False
-    assert explanation["matched_rule_id"] is None
-    assert explanation["matched_rule_priority"] is None
-    assert explanation["matched_conditions"] == []
-    assert explanation["default_decision"] is True
+    assert explanation["matched"] is True
+    assert explanation["matched_rule_id"] == "allow-readme-read"
+    assert explanation["matched_rule_priority"] == 50
+    assert "target_matches" in explanation["matched_conditions"]
+    assert "target_not_matches" in explanation["matched_conditions"]
+    assert explanation["default_decision"] is False

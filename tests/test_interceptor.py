@@ -123,13 +123,14 @@ def test_interceptor_writes_audit_event(tmp_path):
     assert interceptor.audit_logger.verify_integrity() is True
 
 
-def test_allowed_unregistered_tool_returns_execution_failure(tmp_path):
+def test_unmatched_unregistered_tool_is_blocked_by_default_policy(tmp_path):
     interceptor = build_test_interceptor(tmp_path)
 
     result = interceptor.intercept(
         ToolRequest(tool_name="unknown_safe_tool", action="noop", target="demo")
     )
 
-    assert result.policy_decision.decision == Decision.ALLOW
-    assert result.execution.status == ExecutionStatus.FAILED
+    assert result.policy_decision.decision == Decision.BLOCK
+    assert result.policy_decision.policy_id is None
+    assert result.execution.status == ExecutionStatus.SKIPPED
     assert result.execution.executed is False

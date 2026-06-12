@@ -49,12 +49,13 @@ def test_default_decision_require_approval_is_configurable(tmp_path: Path) -> No
     assert result.explanation.default_decision is True
 
 
-def test_default_policy_has_explicit_allow_fallback() -> None:
+def test_default_policy_blocks_unmatched_requests() -> None:
     engine = load_default_policy_engine()
 
     result = engine.evaluate(ToolRequest(tool_name="unknown_tool"))
 
-    assert result.decision == Decision.ALLOW
-    assert result.allowed is True
+    assert engine.default_decision == Decision.BLOCK
+    assert result.decision == Decision.BLOCK
+    assert result.allowed is False
     assert result.explanation is not None
     assert result.explanation.default_decision is True

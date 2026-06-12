@@ -101,6 +101,8 @@ class PolicyRule(BaseModel):
     environment: str | None = None
     target_equals: str | None = None
     target_contains: str | None = None
+    target_matches: str | None = None
+    target_not_matches: str | None = None
     input_equals: Any | None = None
     input_contains: str | None = None
     metadata_equals: dict[str, Any] = Field(default_factory=dict)

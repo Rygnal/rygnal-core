@@ -4,6 +4,7 @@ The policy engine decides whether an AI-agent tool request should be
 allowed, blocked, simulated, or sent for human approval.
 """
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,13 @@ from rygnal.models import (
     ToolRequest,
 )
 
+DEFAULT_POLICY_PATH = Path("policies/default_policy.yaml")
+PRODUCTION_SAFE_POLICY_PATH = Path("policies/production_safe_policy.yaml")
+
+
+class PolicyLoadError(ValueError):
+    """Raised when a policy file violates a safety invariant."""
+
 
 class PolicyEngine:
     """Evaluate AI-agent tool requests against policy rules."""
@@ -28,7 +36,7 @@ class PolicyEngine:
         self,
         rules: list[PolicyRule] | None = None,
         policy_version: str = "policy.v1",
-        default_decision: Decision = Decision.ALLOW,
+        default_decision: Decision = Decision.BLOCK,
     ) -> None:
         self.policy_version = policy_version
         self.default_decision = default_decision
@@ -49,6 +57,7 @@ class PolicyEngine:
 
         policy_schema = PolicySchema(**data)
         cls._validate_policy_schema(policy_schema)
+
         return cls(
             rules=policy_schema.rules,
             policy_version=policy_schema.policy_version,
@@ -64,6 +73,19 @@ class PolicyEngine:
             if rule.id in seen_rule_ids:
                 raise ValueError(f"Duplicate policy rule id: {rule.id}")
             seen_rule_ids.add(rule.id)
+
+            for field_name in ("target_matches", "target_not_matches"):
+                pattern = getattr(rule, field_name)
+
+                if pattern is None:
+                    continue
+
+                try:
+                    re.compile(pattern)
+                except re.error as exc:
+                    raise PolicyLoadError(
+                        f"Invalid regex in policy rule '{rule.id}' field '{field_name}': {exc}"
+                    ) from exc
 
     def evaluate(
         self,
@@ -118,6 +140,8 @@ class PolicyEngine:
         request: ToolRequest,
         risk_context: dict[str, Any],
     ) -> bool:
+        target = request.target or ""
+
         if rule.tool_name and rule.tool_name != request.tool_name:
             return False
 
@@ -127,10 +151,16 @@ class PolicyEngine:
         if rule.environment and rule.environment != request.environment:
             return False
 
-        if rule.target_equals and rule.target_equals != request.target:
+        if rule.target_equals and rule.target_equals != target:
             return False
 
-        if rule.target_contains and rule.target_contains not in (request.target or ""):
+        if rule.target_contains and rule.target_contains not in target:
+            return False
+
+        if rule.target_matches and not re.search(rule.target_matches, target):
+            return False
+
+        if rule.target_not_matches and re.search(rule.target_not_matches, target):
             return False
 
         if rule.input_equals is not None and rule.input_equals != request.input:
@@ -150,6 +180,7 @@ class PolicyEngine:
             rule.metadata_contains,
         ):
             return False
+
         if rule.risk_level and rule.risk_level != risk_context.get("risk_level"):
             return False
 
@@ -157,6 +188,7 @@ class PolicyEngine:
             risk_score = risk_context.get("risk_score")
             if risk_score is None or risk_score < rule.risk_score_min:
                 return False
+
         return True
 
     @staticmethod
@@ -219,11 +251,18 @@ class PolicyEngine:
         if rule.target_contains:
             conditions.append("target_contains")
 
+        if rule.target_matches:
+            conditions.append("target_matches")
+
+        if rule.target_not_matches:
+            conditions.append("target_not_matches")
+
         if rule.input_equals is not None:
             conditions.append("input_equals")
 
         if rule.input_contains:
             conditions.append("input_contains")
+
         if rule.metadata_equals:
             conditions.append("metadata_equals")
 
@@ -266,6 +305,13 @@ def load_default_policy_engine(
     mode = RuntimeMode(runtime_mode)
 
     if mode == RuntimeMode.PRODUCTION_SAFE:
-        return PolicyEngine.from_file("policies/production_safe_policy.yaml")
+        return PolicyEngine.from_file(PRODUCTION_SAFE_POLICY_PATH)
 
-    return PolicyEngine.from_file("policies/default_policy.yaml")
+    engine = PolicyEngine.from_file(DEFAULT_POLICY_PATH)
+
+    if engine.default_decision != Decision.BLOCK:
+        raise PolicyLoadError(
+            "default_policy.yaml must be fail-closed. default_decision must be 'block'."
+        )
+
+    return engine
