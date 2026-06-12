@@ -12,8 +12,10 @@ from rygnal.models import (
     ApprovalStatus,
     PolicyDecision,
     ToolRequest,
+    new_trace_id,
     utc_now_iso,
 )
+from rygnal.security import redact_sensitive_value
 
 ApprovalResolver = Callable[[ApprovalRequest], ApprovalDecision]
 
@@ -32,7 +34,7 @@ class ApprovalWorkflow:
     ) -> tuple[ApprovalRequest, ApprovalDecision]:
         """Create an approval request and return the approval decision."""
         approval_request = ApprovalRequest(
-            trace_id=str(request.metadata.get("trace_id") or ""),
+            trace_id=str(request.metadata.get("trace_id") or new_trace_id()),
             requested_by=request.user_id,
             agent_id=request.agent_id,
             environment=request.environment,
@@ -41,8 +43,8 @@ class ApprovalWorkflow:
             target=request.target,
             policy_id=policy_decision.policy_id,
             reason=policy_decision.reason,
-            risk_assessment=risk_assessment or {},
-            metadata=request.metadata,
+            risk_assessment=_redacted_mapping(risk_assessment),
+            metadata=_redacted_mapping(request.metadata),
         )
 
         approval_decision = self.resolver(approval_request)
@@ -95,3 +97,13 @@ def reject_for_testing(
         decided_at=utc_now_iso(),
         reason=reason,
     )
+
+
+def _redacted_mapping(value: dict[str, Any] | None) -> dict[str, Any]:
+    """Return a safely redacted metadata mapping for approval context."""
+    redacted_value = redact_sensitive_value(value or {})
+
+    if not isinstance(redacted_value, dict):
+        return {}
+
+    return redacted_value

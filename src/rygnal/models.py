@@ -5,7 +5,7 @@ from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 def utc_now_iso() -> str:
@@ -151,21 +151,40 @@ class PolicyDecision(BaseModel):
 class ApprovalRequest(BaseModel):
     """Approval request created for human-reviewed actions."""
 
-    approval_id: str = Field(default_factory=new_approval_id)
-    created_at: str = Field(default_factory=utc_now_iso)
-    trace_id: str = Field(default_factory=new_trace_id)
+    model_config = ConfigDict(frozen=True)
 
-    requested_by: str
-    agent_id: str
-    environment: str
+    approval_id: str = Field(default_factory=new_approval_id, min_length=1)
+    created_at: str = Field(default_factory=utc_now_iso, min_length=1)
+    trace_id: str = Field(default_factory=new_trace_id, min_length=1)
 
-    tool_name: str
+    requested_by: str = Field(min_length=1)
+    agent_id: str = Field(min_length=1)
+    environment: str = Field(min_length=1)
+
+    tool_name: str = Field(min_length=1)
     action: str | None = None
     target: Any | None = None
     policy_id: str | None = None
-    reason: str
+    reason: str = Field(min_length=1)
     risk_assessment: dict[str, Any] = Field(default_factory=dict)
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator(
+        "approval_id",
+        "created_at",
+        "trace_id",
+        "requested_by",
+        "agent_id",
+        "environment",
+        "tool_name",
+        "reason",
+    )
+    @classmethod
+    def _reject_blank_context(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Approval request context fields must not be blank.")
+
+        return value
 
 
 class ApprovalDecision(BaseModel):
