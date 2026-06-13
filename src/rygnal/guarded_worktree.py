@@ -87,7 +87,9 @@ def create_guarded_worktree(config: GuardedWorktreeConfig) -> GuardedWorktree:
     try:
         is_bare = _run_git(["rev-parse", "--is-bare-repository"], cwd=repo_root)
     except GuardedWorktreeError as e:
-        raise GuardedWorktreeError(f"Trusted repository not found or invalid at: {repo_root}") from e
+        raise GuardedWorktreeError(
+            f"Trusted repository not found or invalid at: {repo_root}"
+        ) from e
 
     if is_bare == "true":
         raise GuardedWorktreeError("Bare repositories are not supported for guarded execution.")
