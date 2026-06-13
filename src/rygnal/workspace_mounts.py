@@ -45,9 +45,7 @@ class MountContract:
             return
 
         if self.host_source is not None:
-            raise MountSecurityError(
-                f"{kind.value} mounts must not define host_source."
-            )
+            raise MountSecurityError(f"{kind.value} mounts must not define host_source.")
 
 
 @dataclass(frozen=True)
@@ -60,9 +58,7 @@ class WorkspaceMountPlan:
         seen_paths: set[str] = set()
         for mount in self.mounts:
             if mount.sandbox_path in seen_paths:
-                raise MountSecurityError(
-                    f"Duplicate sandbox mount path: {mount.sandbox_path}"
-                )
+                raise MountSecurityError(f"Duplicate sandbox mount path: {mount.sandbox_path}")
             seen_paths.add(mount.sandbox_path)
 
         ordered_mounts = tuple(sorted(self.mounts, key=_mount_sort_key))
@@ -100,9 +96,7 @@ def normalize_sandbox_path(
         raise MountSecurityError(f"Sandbox path must not traverse: {sandbox_path}")
 
     if not _is_within_or_equal(candidate, root):
-        raise MountSecurityError(
-            f"Sandbox path must stay under {root.as_posix()}: {sandbox_path}"
-        )
+        raise MountSecurityError(f"Sandbox path must stay under {root.as_posix()}: {sandbox_path}")
 
     return candidate.as_posix()
 
