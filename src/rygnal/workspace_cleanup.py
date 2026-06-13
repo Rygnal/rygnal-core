@@ -88,11 +88,12 @@ def reset_worktree(worktree: GuardedWorktree, config: GuardedWorktreeConfig) -> 
     )
 
     try:
-        # Reset tracked files to the immutable baseline SHA (not HEAD, which the agent may have moved)
+        # Reset tracked files to the immutable baseline SHA
+        # (not HEAD, which the agent may have moved)
         _run_git(["reset", "--hard", worktree.baseline_commit_sha], cwd=worktree.workspace_path)
         # Destroy all untracked files and artifacts (double -f for nested git dirs)
         _run_git(["clean", "-ffdx"], cwd=worktree.workspace_path)
-
+        
         return CleanupResult(
             status=CleanupStatus.RESET_SUCCESS,
             message=f"Worktree successfully reset to {worktree.baseline_commit_sha}.",
@@ -134,15 +135,18 @@ def destroy_worktree(worktree: GuardedWorktree, config: GuardedWorktreeConfig) -
 
         # Force git to clean up the dangling metadata pointer
         _run_git(["worktree", "prune"], cwd=config.trusted_repo_path)
-
+        
         return CleanupResult(
             status=CleanupStatus.CLEANED_FALLBACK,
-            message=f"Degraded cleanup: Git removal failed ({fallback_msg}). Rmtree + Prune executed.",
+            message=(
+                f"Degraded cleanup: Git removal failed ({fallback_msg}). "
+                "Rmtree + Prune executed."
+            ),
             prune_attempted=True,
         )
     except Exception as e:
         return CleanupResult(
             status=CleanupStatus.CLEANUP_FAILED,
             message=f"Critical cleanup failure: {e}",
-            prune_attempted=True,  # We may have failed the physical delete but attempted the prune
+            prune_attempted=True, # We may have failed the physical delete but attempted the prune
         )
