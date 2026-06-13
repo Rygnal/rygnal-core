@@ -7,10 +7,12 @@ from rygnal.guarded_worktree import GuardedWorktree, GuardedWorktreeConfig, crea
 from rygnal.workspace_cleanup import (
     CleanupStatus,
     GuardedWorkspaceCleanupError,
-    _run_git as real_run_git,
     _verify_deletion_guards,
     destroy_worktree,
     reset_worktree,
+)
+from rygnal.workspace_cleanup import (
+    _run_git as real_run_git,
 )
 
 
