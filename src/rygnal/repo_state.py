@@ -52,8 +52,8 @@ def _run_git(args: list[str], cwd: Path) -> str:
 
 def get_uncommitted_changes(repo_path: Path) -> RepoChanges:
     """Parse git status to detect staged, unstaged, and untracked files."""
-    output = _run_git(["status", "--porcelain"], cwd=repo_path).strip()
-    if not output:
+    output = _run_git(["status", "--porcelain"], cwd=repo_path)
+    if not output.strip():
         return RepoChanges()
 
     staged: list[str] = []
