@@ -11,7 +11,9 @@ import json
 import os
 import platform
 import shutil
-import subprocess
+
+# Intentional fixed-argv backend probes; all subprocess calls use shell=False.
+import subprocess  # nosec B404
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
@@ -214,7 +216,8 @@ def _probe_bubblewrap_namespaces() -> bool:
         return False
 
     try:
-        result = subprocess.run(
+        # Fixed probe argv; shell=False.
+        result = subprocess.run(  # nosec B603
             [
                 bwrap_path,
                 "--unshare-user",
@@ -243,7 +246,8 @@ def _probe_sandbox_helper() -> bool:
         return False
 
     try:
-        result = subprocess.run(
+        # Fixed probe argv; shell=False.
+        result = subprocess.run(  # nosec B603
             [helper_path, "probe"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -272,7 +276,8 @@ def _probe_podman_rootless() -> bool:
         return False
 
     try:
-        result = subprocess.run(
+        # Fixed probe argv; shell=False.
+        result = subprocess.run(  # nosec B603
             [podman_path, "info", "--format", "{{.Host.Security.Rootless}}"],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
@@ -292,7 +297,8 @@ def _probe_docker_rootless() -> bool:
         return False
 
     try:
-        result = subprocess.run(
+        # Fixed probe argv; shell=False.
+        result = subprocess.run(  # nosec B603
             [docker_path, "info", "--format", "{{json .SecurityOptions}}"],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
