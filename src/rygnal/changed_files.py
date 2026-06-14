@@ -327,7 +327,7 @@ def _decode_git_field(field: bytes) -> str:
 
 def _run_git(args: list[str], *, cwd: Path) -> bytes:
     try:
-        result = subprocess.run(  # nosec B603,B607
+        result = subprocess.run(  # nosec B603, B607
             ["git", *args],
             cwd=cwd,
             check=True,
