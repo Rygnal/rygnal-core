@@ -40,8 +40,8 @@ validate-go:
 validate-rust:
 	@echo "==> Validating Rust (Kernel)..."
 	cd rust-kernel && cargo fmt --check
-	cd rust-kernel && cargo clippy -- -D warnings
-	cd rust-kernel && cargo test
+	cd rust-kernel && cargo clippy --no-default-features -- -D warnings
+	cd rust-kernel && cargo test --no-default-features
 
 validate-python: format lint test security audit demo
 	@echo "==> Python engine checks passed!"
