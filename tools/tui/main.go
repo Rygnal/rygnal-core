@@ -47,10 +47,10 @@ type ConnStatusMsg struct {
 
 // StreamClient owns the SSE connection lifecycle and persists cursor.
 type StreamClient struct {
-	BaseURL   string
-	seen      map[string]struct{}
-	lastRx    time.Time
-	cursorPat string
+	BaseURL    string
+	seen       map[string]struct{}
+	lastRx     time.Time
+	cursorPat  string
 	cursorFile string
 }
 
@@ -58,8 +58,8 @@ func NewStreamClient(baseURL string) *StreamClient {
 	home, _ := os.UserHomeDir()
 	cursorFile := filepath.Join(home, ".rygnal_tui_cursor")
 	return &StreamClient{
-		BaseURL: baseURL,
-		seen:    make(map[string]struct{}),
+		BaseURL:    baseURL,
+		seen:       make(map[string]struct{}),
 		cursorFile: cursorFile,
 	}
 }
@@ -210,7 +210,7 @@ type model struct {
 	// quick filter (prefix match against ActionID)
 	filter string
 	// input mode for entering filter
-	inputMode bool
+	inputMode   bool
 	inputBuffer string
 	// show help overlay
 	showHelp bool
@@ -223,13 +223,13 @@ type model struct {
 	// last seen SSE cursor offset
 	lastCursor int
 
-	msgs []string
-	status string
+	msgs         []string
+	status       string
 	spinnerIndex int
 	spinnerChars string
-	active bool
-	totalEvents int
-	lastEvent time.Time
+	active       bool
+	totalEvents  int
+	lastEvent    time.Time
 }
 
 func initialModel() model {
@@ -242,16 +242,16 @@ func initialModel() model {
 			"policy.checked":    false,
 			"decision.made":     false,
 		},
-		events:      []Event{},
-		selected:    0,
-		showDetails: true,
-		timeline:    map[string][]Event{},
-		historyFile: hist,
-		msgs:        []string{},
-		status:      "connecting",
+		events:       []Event{},
+		selected:     0,
+		showDetails:  true,
+		timeline:     map[string][]Event{},
+		historyFile:  hist,
+		msgs:         []string{},
+		status:       "connecting",
 		spinnerIndex: 0,
 		spinnerChars: `|/-\\`,
-		active:      false,
+		active:       false,
 	}
 }
 
@@ -308,7 +308,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			line = fmt.Sprintf("%s — %s", line, e.Command)
 		}
 		m.msgs = append(m.msgs, line)
-		if len(m.msgs) > 200 { m.msgs = m.msgs[len(m.msgs)-200:] }
+		if len(m.msgs) > 200 {
+			m.msgs = m.msgs[len(m.msgs)-200:]
+		}
 		m.status = "connected"
 		m.active = true
 		m.totalEvents++
